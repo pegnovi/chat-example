@@ -18,12 +18,27 @@
 		<ul id="messages"></ul>
 		<form action="">
 			<input id="m" autocomplete="off" /><button>Send</button>
-			<button id="startGame"> Start Game </button>
 		</form>
+		<button id="startGame"> Start Game </button>
+		<button id="rock"> Rock </button>
+		<button id="paper"> Paper </button>
+		<button id="scissors"> Scissors </button>
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 		<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 		<script>
 			$(function () {
+
+				function hideRPS() {
+					$('#rock').hide();
+					$('#paper').hide();
+					$('#scissors').hide();
+				}
+				function showRPS() {
+					$('#rock').show();
+					$('#paper').show();
+					$('#scissors').show();
+				}
+
 				var socket = io();
 				$('form').submit(function(){
 					socket.emit('chat message', $('#m').val());
@@ -35,9 +50,22 @@
 					window.scrollTo(0, document.body.scrollHeight);
 				});
 
+
+				function rpsClick() {
+					console.log(this.id);
+				}
+				$('#rock').click(rpsClick);
+				$('#paper').click(rpsClick);
+				$('#scissors').click(rpsClick);
+
 				$('#startGame').click(function() {
 					socket.emit('start game');
 				});
+				socket.on('In Game', function() {
+					console.log('GAME HAS STARTED!!!');
+					showRPS();
+				});
+
 			});
 		</script>
 	</body>

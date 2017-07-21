@@ -10,13 +10,47 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
+// Socket Gamestate
+function setupGameState(socket) {
+	socket.gameState = {
+		roomName: '',
+		inGame: false
+	};
+}
+function setGameStateVar(socket, key, val) {
+	socket.gameState[key] = val;
+}
+function getGameStateVar(socket, key) {
+	return socket.gameState[key];
+}
 
+// Rooms
 function getRooms(io) {
 	return io.sockets.adapter.rooms;
 }
 
+function getRoom(io, targetRoom) {
+	return getRooms(io)[targetRoom];
+}
+
 function getSockets(io) {
 	return _.keys(io.sockets.sockets);
+}
+function getSocket(io, socketId) {
+	return io.sockets.sockets[socketId];
+}
+
+function getGameRooms(io) {
+	const sockets = getSockets(io);
+	const rooms = getRooms(io);
+
+	const gameRooms = {};
+	_.forEach(rooms, function(room, roomName) {
+		if(!_.includes(sockets, roomName)) {
+			gameRooms[roomName] = room;
+		}
+	});
+	return gameRooms;
 }
 
 function findVacantRoom(io) {
@@ -30,7 +64,6 @@ function findVacantRoom(io) {
 			return false; // breakout
 		}
 	});
-
 	return chosenRoomName;
 }
 
@@ -41,22 +74,36 @@ function joinRoom(io, socket) {
 	}
 
 	// Join Room
-	socket.join(roomName, function() {
-		// emit back to client
-		console.log(getRooms(io));
-	});
+	socket.join(roomName);
+	setGameStateVar(socket, 'roomName', roomName);
+
+	console.log('roomName: ', roomName);
+	return roomName;
 }
 
 function startGame(io, socket) {
 	console.log('startGame: ', socket.id);
 
-	joinRoom(io, socket);
-
+	const roomName = joinRoom(io, socket);
+	const room = getRoom(io, roomName);
+	if(room.length === 1) {
+		// TODO: Setup room's game state
+	}
+	else if(room.length === 2) {
+		_.forEach(_.keys(room.sockets), function(socketId) {
+			setGameStateVar(getSocket(io, socketId), 'inGame', true);
+		});
+		io.in(roomName).emit('In Game');
+	}
 }
 
 io.on('connection', function(socket){
 	console.log('client connected: ', socket.id);
 
+	// Setup Game State
+	setupGameState(socket);
+
+	console.log('Game Rooms: ', getGameRooms(io));
 
 	socket.on('start game', function() {
 		startGame(io, socket);
