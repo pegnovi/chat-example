@@ -23,6 +23,9 @@
 		<button id="rock"> Rock </button>
 		<button id="paper"> Paper </button>
 		<button id="scissors"> Scissors </button>
+		
+		<button id="ready"> Ready </button>
+
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 		<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 		<script>
@@ -61,6 +64,10 @@
 				$('#startGame').click(function() {
 					socket.emit('start game');
 				});
+				$('#ready').click(function() {
+					socket.emit('ready');
+				});
+
 				socket.on('In Game', function() {
 					console.log('GAME HAS STARTED!!!');
 					showRPS();

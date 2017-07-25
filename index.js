@@ -10,103 +10,57 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-// Socket Gamestate
-function setupGameState(socket) {
-	socket.gameState = {
-		roomName: '',
-		inGame: false
-	};
-}
-function setGameStateVar(socket, key, val) {
-	socket.gameState[key] = val;
-}
-function getGameStateVar(socket, key) {
-	return socket.gameState[key];
-}
+var helpers = require('./socketHelpers');
 
-// Rooms
-function getRooms(io) {
-	return io.sockets.adapter.rooms;
-}
-
-function getRoom(io, targetRoom) {
-	return getRooms(io)[targetRoom];
-}
-
-function getSockets(io) {
-	return _.keys(io.sockets.sockets);
-}
-function getSocket(io, socketId) {
-	return io.sockets.sockets[socketId];
-}
-
-function getGameRooms(io) {
-	const sockets = getSockets(io);
-	const rooms = getRooms(io);
-
-	const gameRooms = {};
-	_.forEach(rooms, function(room, roomName) {
-		if(!_.includes(sockets, roomName)) {
-			gameRooms[roomName] = room;
-		}
-	});
-	return gameRooms;
-}
-
-function findVacantRoom(io) {
-	const sockets = getSockets(io);
-	const rooms = getRooms(io);
-
-	var chosenRoomName = '';
-	_.forEach(rooms, function(room, roomName) {
-		if(!_.includes(sockets, roomName) && room.length < 2) {
-			chosenRoomName = roomName;
-			return false; // breakout
-		}
-	});
-	return chosenRoomName;
-}
 
 function joinRoom(io, socket) {
-	var roomName = findVacantRoom(io);
+	var roomName = helpers.findVacantRoom(io);
 	if(!roomName) {
 		roomName = uuidv4();
 	}
 
 	// Join Room
 	socket.join(roomName);
-	setGameStateVar(socket, 'roomName', roomName);
 
 	console.log('roomName: ', roomName);
 	return roomName;
 }
 
 function startGame(io, socket) {
-	console.log('startGame: ', socket.id);
+	if(!helpers.socketIsInRoom(socket)) {
+		console.log('startGame: ', socket.id);
 
-	const roomName = joinRoom(io, socket);
-	const room = getRoom(io, roomName);
-	if(room.length === 1) {
-		// TODO: Setup room's game state
+		const roomName = joinRoom(io, socket);
+		const room = helpers.getRoom(io, roomName);
+		if(room.length <= 1) {
+			// TODO: Setup room's game state
+			helpers.setupGameStateRoom(io, roomName);
+		}
+		else if(room.length === 2) {
+			io.in(roomName).emit('In Game');
+		}
 	}
-	else if(room.length === 2) {
-		_.forEach(_.keys(room.sockets), function(socketId) {
-			setGameStateVar(getSocket(io, socketId), 'inGame', true);
-		});
-		io.in(roomName).emit('In Game');
+	else {
+		console.log('socket already in room!');
 	}
 }
 
 io.on('connection', function(socket){
 	console.log('client connected: ', socket.id);
 
-	// Setup Game State
-	setupGameState(socket);
-
-	console.log('Game Rooms: ', getGameRooms(io));
+	console.log('Game Rooms: ', helpers.getGameRooms(io));
 
 	socket.on('start game', function() {
 		startGame(io, socket);
+	});
+	socket.on('ready', function() {
+		// Find room this socket is in
+		var room = helpers.getSocketRoom(io, socket);
+		if(room) {
+			console.log(room);
+			// If both are ready, start game
+			console.log('room');
+		}
 	});
 
 
