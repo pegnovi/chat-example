@@ -22,22 +22,33 @@ function joinRoom(io, socket) {
 	// Join Room
 	socket.join(roomName);
 
+	const room = helpers.getRoom(io, roomName);
+	// Setup gameState
+	if(room) {
+		if(!room.gameState) {
+			helpers.setupGameState(room);
+		}
+		helpers.setSocketState(room, socket, 'neutral');
+	}
+	else {
+		console.log('Room not created!?');
+	}
+
 	console.log('roomName: ', roomName);
-	return roomName;
+	return {
+		roomName,
+		room
+	};
 }
 
 function startGame(io, socket) {
 	if(!helpers.socketIsInRoom(socket)) {
 		console.log('startGame: ', socket.id);
 
-		const roomName = joinRoom(io, socket);
-		const room = helpers.getRoom(io, roomName);
-		if(room.length <= 1) {
-			// TODO: Setup room's game state
-			helpers.setupGameStateRoom(io, roomName);
-		}
-		else if(room.length === 2) {
-			io.in(roomName).emit('In Game');
+		const roomData = joinRoom(io, socket);
+
+		if(roomData.room.length === 2) {
+			io.in(roomData.roomName).emit('In Game');
 		}
 	}
 	else {
@@ -57,6 +68,8 @@ io.on('connection', function(socket){
 		// Find room this socket is in
 		var room = helpers.getSocketRoom(io, socket);
 		if(room) {
+			helpers.setSocketState(room, socket, 'ready');
+			
 			console.log(room);
 			// If both are ready, start game
 			console.log('room');

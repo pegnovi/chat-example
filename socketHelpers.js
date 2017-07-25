@@ -55,17 +55,33 @@ module.exports.getSocket = getSocket;
 module.exports.getGameRooms = getGameRooms;
 module.exports.findVacantRoom = findVacantRoom;
 
-function setupGameStateRoom(io, roomName) {
+function setupGameStateOfRoomName(io, roomName) {
 	const room = getRoom(io, roomName);
 	if(room) {
-		room.gameState = {
-			round: 0,
-			maxRounds: 1,
-			timeLimit: 3000,
-			sockets: {}
-		};
+		setupGameState(room);
 	}
 }
+function setupGameState(room) {
+	room.gameState = {
+		round: 0,
+		maxRounds: 1,
+		timeLimit: 3000,
+		socketStates: {}
+	};
+}
+
+// Socket states
+// neutral
+// ready
+// inGame
+function setSocketState(room, socket, state) {
+	const socketStates = room.gameState.socketStates;
+	if(!socketStates[socket.id]) {
+		socketStates[socket.id] = { state: '' };
+	}
+	socketStates[socket.id].state = state;
+}
+
 function getSocketRoom(io, socket) {
 	var socketRooms = _.filter(socket.rooms, function(val, key) {
 		return key !== socket.id;
@@ -78,6 +94,7 @@ function socketIsInRoom(socket) {
 	return _.size(socket.rooms) === 2;
 }
 
-module.exports.setupGameStateRoom = setupGameStateRoom;
+module.exports.setupGameState = setupGameState;
+module.exports.setSocketState = setSocketState;
 module.exports.getSocketRoom = getSocketRoom;
 module.exports.socketIsInRoom = socketIsInRoom;
