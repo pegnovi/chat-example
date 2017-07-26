@@ -10,11 +10,11 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
 
-var helpers = require('./socketHelpers');
+var helpers = require('./socketHelpers')(io);
 
 
-function joinRoom(io, socket) {
-	var roomName = helpers.findVacantRoom(io);
+function joinRoom(socket) {
+	var roomName = helpers.findVacantRoom();
 	if(!roomName) {
 		roomName = uuidv4();
 	}
@@ -22,13 +22,13 @@ function joinRoom(io, socket) {
 	// Join Room
 	socket.join(roomName);
 
-	const room = helpers.getRoom(io, roomName);
+	const room = helpers.getRoom(roomName);
 	// Setup gameState
 	if(room) {
 		if(!room.gameState) {
 			helpers.setupGameState(room);
 		}
-		helpers.setSocketState(room, socket, 'neutral');
+		room.gameState.addSocketState(socket.id, 'neutral');
 	}
 	else {
 		console.log('Room not created!?');
@@ -41,11 +41,12 @@ function joinRoom(io, socket) {
 	};
 }
 
-function startGame(io, socket) {
+function joinGame(socket) {
+	// Ensure socket isn't already in another room
 	if(!helpers.socketIsInRoom(socket)) {
-		console.log('startGame: ', socket.id);
+		console.log('joinGame: ', socket.id);
 
-		const roomData = joinRoom(io, socket);
+		const roomData = joinRoom(socket);
 
 		if(roomData.room.length === 2) {
 			io.in(roomData.roomName).emit('In Game');
@@ -59,20 +60,29 @@ function startGame(io, socket) {
 io.on('connection', function(socket){
 	console.log('client connected: ', socket.id);
 
-	console.log('Game Rooms: ', helpers.getGameRooms(io));
+	console.log('Game Rooms: ', helpers.getGameRooms());
 
-	socket.on('start game', function() {
-		startGame(io, socket);
+	socket.on('join game', function() {
+		joinGame(socket);
 	});
 	socket.on('ready', function() {
 		// Find room this socket is in
-		var room = helpers.getSocketRoom(io, socket);
-		if(room) {
-			helpers.setSocketState(room, socket, 'ready');
-			
-			console.log(room);
+		var roomData = helpers.getSocketRoomData(socket);
+		if(roomData.room && roomData.room.gameState.socketStates[socket.id].state !== 'ready') {
+
+			roomData.room.gameState.setSocketState(socket.id, 'ready');
+
 			// If both are ready, start game
-			console.log('room');
+			if(roomData.room.gameState.gameIsReady()) {
+				io.in(roomData.roomName).emit('Start Game');
+
+				// Actually start the game phases & repeat if multiple rounds
+				// Game phases server:
+				// countdown -> emit to client that time is over. client will emit back choice
+				// determine winner
+				// repeat or end game
+			}
+
 		}
 	});
 

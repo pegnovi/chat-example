@@ -19,11 +19,11 @@
 		<form action="">
 			<input id="m" autocomplete="off" /><button>Send</button>
 		</form>
-		<button id="startGame"> Start Game </button>
+		<button id="joinGame"> Join Game </button>
 		<button id="rock"> Rock </button>
 		<button id="paper"> Paper </button>
 		<button id="scissors"> Scissors </button>
-		
+
 		<button id="ready"> Ready </button>
 
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
@@ -61,16 +61,19 @@
 				$('#paper').click(rpsClick);
 				$('#scissors').click(rpsClick);
 
-				$('#startGame').click(function() {
-					socket.emit('start game');
+				$('#joinGame').click(function() {
+					socket.emit('join game');
 				});
 				$('#ready').click(function() {
 					socket.emit('ready');
 				});
 
 				socket.on('In Game', function() {
-					console.log('GAME HAS STARTED!!!');
+					console.log('In Game');
 					showRPS();
+				});
+				socket.on('Start Game', function() {
+					console.log('GAME HAS STARTED!!!')
 				});
 
 			});

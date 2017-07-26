@@ -1,100 +1,107 @@
 var _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 
-// Rooms
-function getRooms(io) {
-	return io.sockets.adapter.rooms;
-}
-function getRoom(io, targetRoom) {
-	if(targetRoom) {
-		return getRooms(io)[targetRoom];
+class SocketState {
+	constructor() {
+		this.state = 'neutral';
+		this.score = 0;
 	}
-	return null;
+	setState(state) {
+		this.state = state;
+	}
 }
 
-function getSockets(io) {
-	return _.keys(io.sockets.sockets);
-}
-function getSocket(io, socketId) {
-	return io.sockets.sockets[socketId];
-}
-
-
-function getGameRooms(io) {
-	const sockets = getSockets(io);
-	const rooms = getRooms(io);
-
-	const gameRooms = {};
-	_.forEach(rooms, function(room, roomName) {
-		if(!_.includes(sockets, roomName)) {
-			gameRooms[roomName] = room;
+class GameState {
+	constructor() {
+		this.round = 0;
+		this.maxRounds = 1;
+		this.timeLimit = 3000;
+		this.socketStates = {}; // map of SocketStates
+	}
+	addSocketState(socketId) {
+		this.socketStates[socketId] = new SocketState();
+	}
+	setSocketState(socketId, state) {
+		this.socketStates[socketId].setState(state);
+	}
+	gameIsReady() {
+		if(_.size(this.socketStates) === 2 &&
+			_.isEmpty(_.filter(this.socketStates, (socketState) => socketState.state !== 'ready'))
+		) {
+			return true;
 		}
-	});
-	return gameRooms;
+		return false;
+	}
 }
 
-function findVacantRoom(io) {
-	const sockets = getSockets(io);
-	const rooms = getRooms(io);
+module.exports = function(io) {
+	return {
+		getRooms: function() {
+			return io.sockets.adapter.rooms;
+		},
+		getRoom: function(targetRoom) {
+			if(targetRoom) {
+				return this.getRooms()[targetRoom];
+			}
+			return null;
+		},
 
-	var chosenRoomName = '';
-	_.forEach(rooms, function(room, roomName) {
-		if(!_.includes(sockets, roomName) && room.length < 2) {
-			chosenRoomName = roomName;
-			return false; // breakout
+		getSockets: function() {
+			return _.keys(io.sockets.sockets);
+		},
+		getSocket: function(socketId) {
+			return io.sockets.sockets[socketId];
+		},
+
+		getGameRooms: function() {
+			const sockets = this.getSockets();
+			const rooms = this.getRooms();
+
+			const gameRooms = {};
+			_.forEach(rooms, function(room, roomName) {
+				if(!_.includes(sockets, roomName)) {
+					gameRooms[roomName] = room;
+				}
+			});
+			return gameRooms;
+		},
+
+		findVacantRoom: function() {
+			const sockets = this.getSockets();
+			const rooms = this.getRooms();
+
+			var chosenRoomName = '';
+			_.forEach(rooms, function(room, roomName) {
+				if(!_.includes(sockets, roomName) && room.length < 2) {
+					chosenRoomName = roomName;
+					return false; // breakout
+				}
+			});
+			return chosenRoomName;
+		},
+
+
+		setupGameState: function(room) {
+			room.gameState = new GameState();
+		},
+
+
+
+		getSocketRoomData: function(socket) {
+			var socketRooms = _.filter(socket.rooms, function(val, key) {
+				return key !== socket.id;
+			});
+			return {
+				roomName: _.head(socketRooms),
+				room: this.getRoom(_.head(socketRooms))
+			};
+		},
+
+		// Socket is by default inside a room with its own id
+		socketIsInRoom: function(socket) {
+			return _.size(socket.rooms) === 2;
 		}
-	});
-	return chosenRoomName;
-}
 
-
-module.exports.getRooms = getRooms;
-module.exports.getRoom = getRoom;
-module.exports.getSockets = getSockets;
-module.exports.getSocket = getSocket;
-module.exports.getGameRooms = getGameRooms;
-module.exports.findVacantRoom = findVacantRoom;
-
-function setupGameStateOfRoomName(io, roomName) {
-	const room = getRoom(io, roomName);
-	if(room) {
-		setupGameState(room);
 	}
-}
-function setupGameState(room) {
-	room.gameState = {
-		round: 0,
-		maxRounds: 1,
-		timeLimit: 3000,
-		socketStates: {}
-	};
-}
+};
 
-// Socket states
-// neutral
-// ready
-// inGame
-function setSocketState(room, socket, state) {
-	const socketStates = room.gameState.socketStates;
-	if(!socketStates[socket.id]) {
-		socketStates[socket.id] = { state: '' };
-	}
-	socketStates[socket.id].state = state;
-}
-
-function getSocketRoom(io, socket) {
-	var socketRooms = _.filter(socket.rooms, function(val, key) {
-		return key !== socket.id;
-	});
-	return getRoom(io, _.head(socketRooms));
-}
-
-// Socket is by default inside a room with its own id
-function socketIsInRoom(socket) {
-	return _.size(socket.rooms) === 2;
-}
-
-module.exports.setupGameState = setupGameState;
-module.exports.setSocketState = setSocketState;
-module.exports.getSocketRoom = getSocketRoom;
-module.exports.socketIsInRoom = socketIsInRoom;
