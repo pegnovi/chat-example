@@ -4,10 +4,14 @@ const uuidv4 = require('uuid/v4');
 class SocketState {
 	constructor() {
 		this.state = 'neutral';
+		this.choice = '';
 		this.score = 0;
 	}
-	setState(state) {
-		this.state = state;
+	setByKey(key, val) {
+		this[key] = val;
+	}
+	getByKey(key) {
+		return this[key];
 	}
 }
 
@@ -22,7 +26,16 @@ class GameState {
 		this.socketStates[socketId] = new SocketState();
 	}
 	setSocketState(socketId, state) {
-		this.socketStates[socketId].setState(state);
+		this.socketStates[socketId].setByKey('state', state);
+	}
+	setAllSocketStates(state) {
+		const self = this;
+		_.forEach(_.keys(this.socketStates), function(socketId) {
+			self.setSocketState(socketId, state);
+		});
+	}
+	getSocketState(socketId) {
+		return this.socketStates[socketId].getByKey('state');
 	}
 	gameIsReady() {
 		if(_.size(this.socketStates) === 2 &&

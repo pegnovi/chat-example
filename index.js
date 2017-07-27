@@ -67,7 +67,7 @@ io.on('connection', function(socket){
 	});
 	socket.on('ready', function() {
 		// Find room this socket is in
-		var roomData = helpers.getSocketRoomData(socket);
+		const roomData = helpers.getSocketRoomData(socket);
 		if(roomData.room && roomData.room.gameState.socketStates[socket.id].state !== 'ready') {
 
 			roomData.room.gameState.setSocketState(socket.id, 'ready');
@@ -81,10 +81,37 @@ io.on('connection', function(socket){
 				// countdown -> emit to client that time is over. client will emit back choice
 				// determine winner
 				// repeat or end game
+				const gameState = roomData.room.gameState;
+				if(gameState.round < gameState.maxRounds) {
+					io.in(roomData.roomName).emit('Round Start');
+
+					gameState.setAllSocketStates('inGame');
+
+					setTimeout(function() {
+						console.log('Time Over');
+						io.in(roomData.roomName).emit('Time Over');
+					}, gameState.timeLimit);
+				}
+				else {
+					// Determine winner and End Game
+				}
+
 			}
 
 		}
 	});
+
+	socket.on('Choice', function(data) {
+		console.log(data);
+		const roomData = helpers.getSocketRoomData(socket);
+		const gameState = roomData.room.gameState;
+		if(gameState.getSocketState(socket.id) === 'inGame') {
+			console.log('CHOICE!!!');
+		}
+
+	});
+
+
 
 
 	socket.on('error', function(error) {

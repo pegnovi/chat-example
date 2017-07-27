@@ -53,9 +53,10 @@
 					window.scrollTo(0, document.body.scrollHeight);
 				});
 
-
+				var choice = '';
 				function rpsClick() {
 					console.log(this.id);
+					choice = this.id;
 				}
 				$('#rock').click(rpsClick);
 				$('#paper').click(rpsClick);
@@ -74,6 +75,13 @@
 				});
 				socket.on('Start Game', function() {
 					console.log('GAME HAS STARTED!!!')
+				});
+				socket.on('Round Start', function() {
+					console.log('ROUND HAS STARTED! MAKE A CHOICE');
+				});
+				socket.on('Time Over', function() {
+					console.log('TIME OVER');
+					socket.emit('Choice', {choice: choice});
 				});
 
 			});
