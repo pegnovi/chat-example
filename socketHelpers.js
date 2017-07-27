@@ -49,6 +49,14 @@ class GameState {
 		});
 		return _.size(choices) === 2;
 	}
+	getSocketChoices() {
+		return _.map(this.socketStates, function(val, key) {
+			return {
+				socketId: key,
+				choice: val.getVar('choice')
+			};
+		});
+	}
 	gameIsReady() {
 		if(_.size(this.socketStates) === 2 &&
 			_.isEmpty(_.filter(this.socketStates, (socketState) => socketState.state !== 'ready'))
