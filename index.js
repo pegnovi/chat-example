@@ -7,7 +7,7 @@ var _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+	res.sendFile(__dirname + '/index.html');
 });
 
 var helpers = require('./socketHelpers')(io);
@@ -68,12 +68,13 @@ io.on('connection', function(socket){
 	socket.on('ready', function() {
 		// Find room this socket is in
 		const roomData = helpers.getSocketRoomData(socket);
-		if(roomData.room && roomData.room.gameState.socketStates[socket.id].state !== 'ready') {
+		const gameState = (roomData.room) ? roomData.room.gameState : null;
+		if(gameState && gameState.getSocketStateVar(socket.id, 'state') === 'neutral') {
 
-			roomData.room.gameState.setSocketStateVar(socket.id, 'state', 'ready');
+			gameState.setSocketStateVar(socket.id, 'state', 'ready');
 
 			// If both are ready, start game
-			if(roomData.room.gameState.gameIsReady()) {
+			if(gameState.gameIsReady()) {
 				io.in(roomData.roomName).emit('Start Game');
 
 				// Actually start the game phases & repeat if multiple rounds
@@ -81,7 +82,6 @@ io.on('connection', function(socket){
 				// countdown -> emit to client that time is over. client will emit back choice
 				// determine winner
 				// repeat or end game
-				const gameState = roomData.room.gameState;
 				if(gameState.round < gameState.maxRounds) {
 					io.in(roomData.roomName).emit('Round Start');
 
@@ -107,9 +107,12 @@ io.on('connection', function(socket){
 		const gameState = roomData.room.gameState;
 		if(gameState.getSocketStateVar(socket.id, 'state') === 'inGame') {
 			console.log('CHOICE!!!');
+			gameState.setSocketStateVar(socket.id, 'choice', data.choice);
 
+			if(gameState.bothSocketsHaveChoice()) {
+				console.log('YEY');
+			}
 		}
-
 	});
 
 
@@ -126,11 +129,11 @@ io.on('connection', function(socket){
 	});
 
 
-  socket.on('chat message', function(msg){
-    io.emit('chat message', msg);
-  });
+	socket.on('chat message', function(msg){
+		io.emit('chat message', msg);
+	});
 });
 
 http.listen(port, function(){
-  console.log('listening on *:' + port);
+	console.log('listening on *:' + port);
 });

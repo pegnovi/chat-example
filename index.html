@@ -81,6 +81,9 @@
 				});
 				socket.on('Time Over', function() {
 					console.log('TIME OVER');
+					if(!choice) {
+						choice = 'none';
+					}
 					socket.emit('Choice', {choice: choice});
 				});
 

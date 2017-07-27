@@ -37,7 +37,18 @@ class GameState {
 			self.setSocketStateVar(socketId, key, val);
 		});
 	}
-
+	bothSocketsHaveChoice() {
+		const self = this;
+		const choices = _.filter(_.keys(this.socketStates), function(socketId) {
+			if(self.getSocketStateVar(socketId, 'choice')) {
+				return true
+			}
+			else {
+				return false;
+			}
+		});
+		return _.size(choices) === 2;
+	}
 	gameIsReady() {
 		if(_.size(this.socketStates) === 2 &&
 			_.isEmpty(_.filter(this.socketStates, (socketState) => socketState.state !== 'ready'))
