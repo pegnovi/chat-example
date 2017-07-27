@@ -70,7 +70,7 @@ io.on('connection', function(socket){
 		const roomData = helpers.getSocketRoomData(socket);
 		if(roomData.room && roomData.room.gameState.socketStates[socket.id].state !== 'ready') {
 
-			roomData.room.gameState.setSocketState(socket.id, 'ready');
+			roomData.room.gameState.setSocketStateVar(socket.id, 'state', 'ready');
 
 			// If both are ready, start game
 			if(roomData.room.gameState.gameIsReady()) {
@@ -85,7 +85,7 @@ io.on('connection', function(socket){
 				if(gameState.round < gameState.maxRounds) {
 					io.in(roomData.roomName).emit('Round Start');
 
-					gameState.setAllSocketStates('inGame');
+					gameState.setAllSocketStatesVar('state', 'inGame');
 
 					setTimeout(function() {
 						console.log('Time Over');
@@ -105,8 +105,9 @@ io.on('connection', function(socket){
 		console.log(data);
 		const roomData = helpers.getSocketRoomData(socket);
 		const gameState = roomData.room.gameState;
-		if(gameState.getSocketState(socket.id) === 'inGame') {
+		if(gameState.getSocketStateVar(socket.id, 'state') === 'inGame') {
 			console.log('CHOICE!!!');
+
 		}
 
 	});

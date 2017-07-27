@@ -7,10 +7,10 @@ class SocketState {
 		this.choice = '';
 		this.score = 0;
 	}
-	setByKey(key, val) {
+	setVar(key, val) {
 		this[key] = val;
 	}
-	getByKey(key) {
+	getVar(key) {
 		return this[key];
 	}
 }
@@ -25,18 +25,19 @@ class GameState {
 	addSocketState(socketId) {
 		this.socketStates[socketId] = new SocketState();
 	}
-	setSocketState(socketId, state) {
-		this.socketStates[socketId].setByKey('state', state);
+	setSocketStateVar(socketId, key, val) {
+		this.socketStates[socketId].setVar(key, val);
 	}
-	setAllSocketStates(state) {
+	getSocketStateVar(socketId, key) {
+		return this.socketStates[socketId].getVar(key);
+	}
+	setAllSocketStatesVar(key, val) {
 		const self = this;
 		_.forEach(_.keys(this.socketStates), function(socketId) {
-			self.setSocketState(socketId, state);
+			self.setSocketStateVar(socketId, key, val);
 		});
 	}
-	getSocketState(socketId) {
-		return this.socketStates[socketId].getByKey('state');
-	}
+
 	gameIsReady() {
 		if(_.size(this.socketStates) === 2 &&
 			_.isEmpty(_.filter(this.socketStates, (socketState) => socketState.state !== 'ready'))
