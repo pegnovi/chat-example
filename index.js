@@ -112,11 +112,7 @@ io.on('connection', function(socket){
 			if(gameState.bothSocketsHaveChoice()) {
 				console.log('YEY');
 
-				const socketChoices = gameState.getSocketChoices();
-				console.log(socketChoices);
-
-				const result = evalWinner(socketChoices[0].choice, socketChoices[1].choice);
-				console.log(result);
+				gameState.scoreWinner();
 
 			}
 		}
@@ -144,46 +140,3 @@ io.on('connection', function(socket){
 http.listen(port, function(){
 	console.log('listening on *:' + port);
 });
-
-
-function evalWinner(p1Choice, p2Choice) {
-	const evaluator = {
-		rock: {
-			rock: 'tie',
-			paper: 'lose',
-			scissors: 'win',
-			none: 'win'
-		},
-		paper: {
-			paper: 'tie',
-			scissors: 'lose',
-			rock: 'win',
-			none: 'win'
-		},
-		scissors: {
-			scissors: 'tie',
-			rock: 'lose',
-			paper: 'win',
-			none: 'win'
-		},
-		none: {
-			none: 'tie',
-			rock: 'lose',
-			paper: 'lose',
-			scissors: 'lose',
-		}
-	};
-
-	const resultMapReverser = {
-		win: 'lose',
-		lose: 'win',
-		tie: 'tie'
-	};
-
-	const p1Result = evaluator[p1Choice][p2Choice];
-
-	return {
-		p1Result: p1Result,
-		p2Result: resultMapReverser[p1Result]
-	};
-}

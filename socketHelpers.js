@@ -13,6 +13,9 @@ class SocketState {
 	getVar(key) {
 		return this[key];
 	}
+	increaseScore() {
+		this.score = this.score + 1;
+	}
 }
 
 class GameState {
@@ -64,6 +67,60 @@ class GameState {
 			return true;
 		}
 		return false;
+	}
+	evalWinner(p1Choice, p2Choice) {
+		const evaluator = {
+			rock: {
+				rock: 'tie',
+				paper: 'lose',
+				scissors: 'win',
+				none: 'win'
+			},
+			paper: {
+				paper: 'tie',
+				scissors: 'lose',
+				rock: 'win',
+				none: 'win'
+			},
+			scissors: {
+				scissors: 'tie',
+				rock: 'lose',
+				paper: 'win',
+				none: 'win'
+			},
+			none: {
+				none: 'tie',
+				rock: 'lose',
+				paper: 'lose',
+				scissors: 'lose',
+			}
+		};
+
+		const resultMapReverser = {
+			win: 'lose',
+			lose: 'win',
+			tie: 'tie'
+		};
+
+		const p1Result = evaluator[p1Choice][p2Choice];
+
+		return {
+			p1Result: p1Result,
+			p2Result: resultMapReverser[p1Result]
+		};
+	}
+	scoreWinner() {
+		const socketChoices = this.getSocketChoices();
+		var results = this.evalWinner(socketChoices[0].choice, socketChoices[1].choice);
+		if(results.p1Result === 'win') {
+			this.socketStates[socketChoices[0].socketId].increaseScore();
+		}
+		else if(results.p2Result === 'win') {
+			this.socketStates[socketChoices[1].socketId].increaseScore();
+		}
+
+		console.log(this.socketStates);
+
 	}
 }
 
