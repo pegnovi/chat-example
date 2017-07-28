@@ -21,7 +21,7 @@ class SocketState {
 class GameState {
 	constructor() {
 		this.round = 0;
-		this.maxRounds = 1;
+		this.maxRounds = 2;
 		this.timeLimit = 3000;
 		this.socketStates = {}; // map of SocketStates
 	}
@@ -60,6 +60,14 @@ class GameState {
 			};
 		});
 	}
+	getSocketStatesAsArray() {
+		return _.map(this.socketStates, function(val, key) {
+			return {
+				socketId: key,
+				states: val
+			};
+		});
+	}
 	gameIsReady() {
 		if(_.size(this.socketStates) === 2 &&
 			_.isEmpty(_.filter(this.socketStates, (socketState) => socketState.state !== 'ready'))
@@ -68,7 +76,13 @@ class GameState {
 		}
 		return false;
 	}
+	hasRoundsLeft() {
+		return this.round < this.maxRounds;
+	}
 	evalWinner(p1Choice, p2Choice) {
+
+		console.log(p1Choice, ' vs ', p2Choice);
+
 		const evaluator = {
 			rock: {
 				rock: 'tie',
@@ -110,17 +124,20 @@ class GameState {
 		};
 	}
 	scoreWinner() {
-		const socketChoices = this.getSocketChoices();
-		var results = this.evalWinner(socketChoices[0].choice, socketChoices[1].choice);
+		const socketStates = this.getSocketStatesAsArray();
+		var results = this.evalWinner(socketStates[0].states.choice, socketStates[1].states.choice);
 		if(results.p1Result === 'win') {
-			this.socketStates[socketChoices[0].socketId].increaseScore();
+			this.socketStates[socketStates[0].socketId].increaseScore();
 		}
 		else if(results.p2Result === 'win') {
-			this.socketStates[socketChoices[1].socketId].increaseScore();
+			this.socketStates[socketStates[1].socketId].increaseScore();
 		}
 
 		console.log(this.socketStates);
 
+	}
+	increaseRound() {
+		this.round = this.round + 1;
 	}
 }
 

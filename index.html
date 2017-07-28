@@ -86,6 +86,10 @@
 					}
 					socket.emit('Choice', {choice: choice});
 				});
+				socket.on('Next Round', function() {
+					choice = '';
+					socket.emit('ready');
+				});
 
 			});
 		</script>

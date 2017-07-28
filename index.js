@@ -69,6 +69,7 @@ io.on('connection', function(socket){
 		// Find room this socket is in
 		const roomData = helpers.getSocketRoomData(socket);
 		const gameState = (roomData.room) ? roomData.room.gameState : null;
+
 		if(gameState && gameState.getSocketStateVar(socket.id, 'state') === 'neutral') {
 
 			gameState.setSocketStateVar(socket.id, 'state', 'ready');
@@ -82,7 +83,7 @@ io.on('connection', function(socket){
 				// countdown -> emit to client that time is over. client will emit back choice
 				// determine winner
 				// repeat or end game
-				if(gameState.round < gameState.maxRounds) {
+				if(gameState.hasRoundsLeft()) {
 					io.in(roomData.roomName).emit('Round Start');
 
 					gameState.setAllSocketStatesVar('state', 'inGame');
@@ -114,6 +115,23 @@ io.on('connection', function(socket){
 
 				gameState.scoreWinner();
 
+				// reset choices
+				gameState.setAllSocketStatesVar('choice', '');
+
+				// increase round count
+				gameState.increaseRound();
+
+				// Send results
+
+				// If any rounds left, start next round
+				if(gameState.hasRoundsLeft()) {
+					gameState.setAllSocketStatesVar('state', 'neutral');
+					io.in(roomData.roomName).emit('Next Round');
+				}
+				else {
+					//end game
+					//clear gameState and room?
+				}
 			}
 		}
 	});
