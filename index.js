@@ -106,6 +106,7 @@ io.on('connection', function(socket){
 		console.log(data);
 		const roomData = helpers.getSocketRoomData(socket);
 		const gameState = roomData.room.gameState;
+		
 		if(gameState.getSocketStateVar(socket.id, 'state') === 'inGame') {
 			console.log('CHOICE!!!');
 			gameState.setSocketStateVar(socket.id, 'choice', data.choice);
@@ -131,6 +132,16 @@ io.on('connection', function(socket){
 				else {
 					//end game
 					//clear gameState and room?
+
+					const socketsInRoom = helpers.getSocketsInRoom(roomData.room);
+
+					// Make both sockets leave the room
+					_.forEach(socketsInRoom, function(socketInRoom) {
+						socketInRoom.leave(roomData.roomName);
+					});
+
+					// At this point the room doesn't exist anymore
+
 				}
 			}
 		}

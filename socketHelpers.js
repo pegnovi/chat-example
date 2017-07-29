@@ -154,14 +154,17 @@ module.exports = function(io) {
 		},
 
 		getSockets: function() {
-			return _.keys(io.sockets.sockets);
+			return io.sockets.sockets;
+		},
+		getSocketIds: function() {
+			return _.keys(this.getSockets());
 		},
 		getSocket: function(socketId) {
 			return io.sockets.sockets[socketId];
 		},
 
 		getGameRooms: function() {
-			const sockets = this.getSockets();
+			const sockets = this.getSocketIds();
 			const rooms = this.getRooms();
 
 			const gameRooms = {};
@@ -174,7 +177,7 @@ module.exports = function(io) {
 		},
 
 		findVacantRoom: function() {
-			const sockets = this.getSockets();
+			const sockets = this.getSocketIds();
 			const rooms = this.getRooms();
 
 			var chosenRoomName = '';
@@ -207,8 +210,15 @@ module.exports = function(io) {
 		// Socket is by default inside a room with its own id
 		socketIsInRoom: function(socket) {
 			return _.size(socket.rooms) === 2;
-		}
+		},
 
+		getSocketsInRoom: function(room) {
+			var sockets = this.getSockets();
+			var socketIdsInRoom = _.keys(room.sockets);
+			return _.filter(sockets, function(socket) {
+				return _.includes(socketIdsInRoom, socket.id);
+			});
+		}
 	}
 };
 
