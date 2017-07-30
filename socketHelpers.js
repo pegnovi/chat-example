@@ -203,8 +203,16 @@ module.exports = function(io) {
 		},
 
 
-		setupGameState: function(room) {
-			room.gameState = new GameState();
+		setupGameStateIfNone: function(room) {
+			if(room) {
+				if(!room.gameState) {
+					room.gameState = new GameState();
+				}
+				return room.gameState;
+			}
+			else {
+				return null;
+			}
 		},
 
 

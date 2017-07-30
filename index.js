@@ -23,16 +23,10 @@ function joinRoom(socket) {
 	socket.join(roomName);
 
 	const room = helpers.getRoom(roomName);
+
 	// Setup gameState
-	if(room) {
-		if(!room.gameState) {
-			helpers.setupGameState(room);
-		}
-		room.gameState.addSocketState(socket.id, 'neutral');
-	}
-	else {
-		console.log('Room not created!?');
-	}
+	const gameState = helpers.setupGameStateIfNone(room);
+	gameState.addSocketState(socket.id);
 
 	console.log('roomName: ', roomName);
 	return {
