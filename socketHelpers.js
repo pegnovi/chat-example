@@ -1,9 +1,9 @@
 var _ = require('lodash');
 const uuidv4 = require('uuid/v4');
 
+// Move this into socket and have ref to sockets in gameState?
 class SocketState {
 	constructor() {
-		this.state = 'neutral';
 		this.choice = '';
 		this.score = 0;
 	}
@@ -18,12 +18,24 @@ class SocketState {
 	}
 }
 
+// State:
+// neutral
+// timing
+// timeOver
+// gameOver
 class GameState {
 	constructor() {
+		this.state = 'neutral';
 		this.round = 0;
 		this.maxRounds = 2;
 		this.timeLimit = 3000;
 		this.socketStates = {}; // map of SocketStates
+	}
+	getVar(key) {
+		return this[key];
+	}
+	setVar(key, val) {
+		this[key] = val;
 	}
 	addSocketState(socketId) {
 		this.socketStates[socketId] = new SocketState();

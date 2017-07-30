@@ -70,7 +70,7 @@ io.on('connection', function(socket){
 		const roomData = helpers.getSocketRoomData(socket);
 		const gameState = (roomData.room) ? roomData.room.gameState : null;
 
-		if(gameState && gameState.getSocketStateVar(socket.id, 'state') === 'neutral') {
+		if(gameState && gameState.getVar('state') === 'neutral') {
 
 			gameState.setSocketStateVar(socket.id, 'state', 'ready');
 
@@ -86,10 +86,11 @@ io.on('connection', function(socket){
 				if(gameState.hasRoundsLeft()) {
 					io.in(roomData.roomName).emit('Round Start');
 
-					gameState.setAllSocketStatesVar('state', 'inGame');
+					gameState.setVar('state', 'timing');
 
 					setTimeout(function() {
 						console.log('Time Over');
+						gameState.setVar('state', 'timeOver');
 						io.in(roomData.roomName).emit('Time Over');
 					}, gameState.timeLimit);
 				}
@@ -107,7 +108,7 @@ io.on('connection', function(socket){
 		const roomData = helpers.getSocketRoomData(socket);
 		const gameState = roomData.room.gameState;
 		
-		if(gameState.getSocketStateVar(socket.id, 'state') === 'inGame') {
+		if(gameState.getVar('state') === 'timeOver') {
 			console.log('CHOICE!!!');
 			gameState.setSocketStateVar(socket.id, 'choice', data.choice);
 
@@ -126,12 +127,12 @@ io.on('connection', function(socket){
 
 				// If any rounds left, start next round
 				if(gameState.hasRoundsLeft()) {
-					gameState.setAllSocketStatesVar('state', 'neutral');
+					gameState.setVar('state', 'neutral');
 					io.in(roomData.roomName).emit('Next Round');
 				}
 				else {
 					//end game
-					//clear gameState and room?
+					gameState.setVar('state', 'gameOver');
 
 					const socketsInRoom = helpers.getSocketsInRoom(roomData.room);
 
