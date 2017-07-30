@@ -69,8 +69,8 @@
 					socket.emit('ready');
 				});
 
-				socket.on('In Game', function() {
-					console.log('In Game');
+				socket.on('Room Complete', function() {
+					console.log('Room Complete');
 					showRPS();
 				});
 				socket.on('Start Game', function() {

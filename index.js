@@ -49,7 +49,7 @@ function joinGame(socket) {
 		const roomData = joinRoom(socket);
 
 		if(roomData.room.length === 2) {
-			io.in(roomData.roomName).emit('In Game');
+			io.in(roomData.roomName).emit('Room Complete');
 		}
 	}
 	else {
